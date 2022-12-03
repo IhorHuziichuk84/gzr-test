@@ -1,0 +1,18 @@
+uuid: f8de40ea-30f5-4a00-9ce3-d522fb238a7d
+langcode: en
+status: true
+dependencies:
+  module:
+    - menu_ui
+third_party_settings:
+  menu_ui:
+    available_menus:
+      - main
+    parent: 'main:'
+name: Group
+type: group
+description: ''
+help: ''
+new_revision: true
+preview_mode: 1
+display_submitted: true
