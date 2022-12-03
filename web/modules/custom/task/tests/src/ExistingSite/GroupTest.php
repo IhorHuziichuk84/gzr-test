@@ -22,13 +22,15 @@ class GroupTest extends ExistingSiteBase {
     // Visit group page.
     $this->drupalGet($node->toUrl());
     // There is no Subscribe link for anonymous users.
-    $this->assertSession()->elementNotExists('css', '.group-user-subscribe');
+    $this->assertSession()->pageTextNotMatches('/Hi .+?, click here if you would like to subscribe to this group called .+?/');
     // Creates a user and log in.
     $user = $this->createUser();
     $this->drupalLogin($user);
     $this->drupalGet($node->toUrl());
+    $message = "Hi {$user->getDisplayName()}, click here if you would like to subscribe to this group called {$node->label()}";
     // Users can see subscribe link.
-    $this->assertSession()->elementExists('css', '.group-user-subscribe');
+    // This is the link for the current user - name and group names.
+    $this->assertSession()->pageTextMatches("/{$message}/");
   }
 
 }

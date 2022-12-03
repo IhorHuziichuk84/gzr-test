@@ -2,7 +2,6 @@
 
 namespace Drupal\task\Plugin\EntityViewBuilder;
 
-use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\node\NodeInterface;
 use Drupal\server_general\EntityViewBuilder\NodeViewBuilderAbstract;
 use Drupal\server_general\TitleAndLabelsTrait;
@@ -24,20 +23,19 @@ class NodeGroup extends NodeViewBuilderAbstract {
   use TitleAndLabelsTrait;
 
   /**
-   * The entity type manager.
+   * The membership manager service.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   * @var \Drupal\og\MembershipManager
    */
-  protected $entityTypeManager;
+  protected $membershipManager;
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
-  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
-    $builder = parent::createInstance($container, $entity_type);
-    $builder->entityTypeManager = $container->get('entity_type.manager');
-
-    return $builder;
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $build = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $build->membershipManager = $container->get('og.membership_manager');
+    return $build;
   }
 
   /**
@@ -78,42 +76,29 @@ class NodeGroup extends NodeViewBuilderAbstract {
    */
   private function getGroupSubscribeLink(NodeInterface $entity) {
     $user = $this->currentUser;
-    if ($user->isAuthenticated()) {
-      $storage = $this->entityTypeManager->getStorage('og_membership');
-      $props = [
-        'uid' => $user->id(),
-        'entity_type' => $entity->getEntityTypeId(),
-        'entity_bundle' => $entity->bundle(),
-        'entity_id' => $entity->id(),
-      ];
-      $memberships = $storage->loadByProperties($props);
-      /** @var \Drupal\og\OgMembershipInterface $membership */
-      $membership = reset($memberships);
-      if (!$membership) {
 
+    if ($user->isAuthenticated()) {
+
+      $membership = $this->membershipManager->getMembership($entity, $user->id());
+      if (empty($membership)) {
         $parameters = [
           'entity_type_id' => $entity->getEntityTypeId(),
           'group' => $entity->id(),
           'og_membership_type' => OgMembershipInterface::TYPE_DEFAULT,
         ];
-        $url = Url::fromRoute('og.subscribe', $parameters);
+        $url = Url::fromRoute('og.subscribe', $parameters)->toString();
+        $title = $this->t(
+            "Hi @name, click here if you would like to subscribe to this group called @label",
+            [
+              '@name' => $user->getDisplayName(),
+              '@label' => $entity->label(),
+            ]
+        );
+        // Lets use theme button template.
         $link = [
-          '#type' => 'link',
-          '#title' => "Hi {$user->getDisplayName()}, click here if you would like to subscribe to this group called {$entity->label()}",
+          '#theme' => 'server_theme_button',
           '#url' => $url,
-          '#attributes' => [
-            'class' => [
-              'group-user-subscribe',
-              'mt-5',
-              'text-blue-900',
-              'rounded-lg',
-              'px-6',
-              'py-1',
-              'text-xl',
-              'border-2',
-              'border-blue-500',
-            ],
-          ],
+          '#title' => $this->t("Hi {$user->getDisplayName()}, click here if you would like to subscribe to this group called {$entity->label()}"),
         ];
         return $link;
       }
