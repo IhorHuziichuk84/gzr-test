@@ -298,6 +298,22 @@ function server_theme_theme() {
       'url' => NULL,
     ],
   ];
+  // Parson card.
+  $info['server_theme_person_card'] = [
+    'variables' => [
+      'name' => NULL,
+      'about' => NULL,
+      'position' => NULL,
+      'mail' => NULL,
+      'phone' => NULL,
+    ],
+  ];
+  // Parson cards.
+  $info['server_theme_person_cards'] = [
+    'variables' => [
+      'items' => NULL,
+    ],
+  ];
 
   return $info;
 }
